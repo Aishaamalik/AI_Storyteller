@@ -3,6 +3,7 @@ import pyttsx3
 from fpdf import FPDF
 import random
 import os
+import time
 from ollama_client import OllamaClient
 
 # Constants
@@ -144,37 +145,220 @@ def export_audio(text, voice_style, filename):
     engine.save_to_file(text, filename)
     engine.runAndWait()
 
-# Custom CSS for better UI
+# Custom CSS for Dark Fantasy Theme
 st.markdown("""
 <style>
+    /* Dark Fantasy Background */
+    .stApp {
+        background: linear-gradient(135deg, #0B0F19 0%, #1A1F2E 100%);
+        color: #E5E7EB;
+        font-family: 'Arial', sans-serif;
+    }
+
+    /* Glowing Particles Effect */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 50%),
+                          radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+                          radial-gradient(circle at 40% 40%, rgba(56, 189, 248, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    /* Glassmorphism Cards */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Neon Glow Headings */
+    .neon-blue {
+        color: #38BDF8;
+        text-shadow: 0 0 10px #38BDF8, 0 0 20px #38BDF8, 0 0 30px #38BDF8;
+        font-weight: bold;
+    }
+
+    .neon-purple {
+        color: #9333EA;
+        text-shadow: 0 0 10px #9333EA, 0 0 20px #9333EA, 0 0 30px #9333EA;
+        font-weight: bold;
+    }
+
+    /* Glowing Pill Buttons */
+    .glow-btn {
+        background: linear-gradient(45deg, #38BDF8, #9333EA);
+        border: none;
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    .glow-btn:hover {
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.6), 0 0 35px rgba(147, 51, 234, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Main Header */
     .main-header {
         font-size: 3rem;
-        color: #4CAF50;
         text-align: center;
         margin-bottom: 2rem;
+        background: linear-gradient(45deg, #38BDF8, #9333EA);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-shadow: none;
     }
-    .story-section {
-        background-color: #f9f9f9;
+
+    /* Sidebar Styling */
+    .sidebar-content {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
         padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        border-left: 5px solid #4CAF50;
-    }
-    .sidebar-header {
-        font-size: 1.5rem;
-        color: #2196F3;
         margin-bottom: 1rem;
     }
-    .generate-btn {
-        background-color: #4CAF50;
-        color: white;
+
+    /* Story Display */
+    .story-card {
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 2rem;
+        max-height: 70vh;
+        overflow-y: auto;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Typewriter Effect Placeholder */
+    .typewriter {
+        border-right: 2px solid #38BDF8;
+        animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+        0%, 50% { border-color: #38BDF8; }
+        51%, 100% { border-color: transparent; }
+    }
+
+    /* Progress Animation */
+    .typing-dots {
+        display: inline-block;
+    }
+
+    .typing-dots::after {
+        content: '...';
+        animation: dots 1.5s infinite;
+    }
+
+    @keyframes dots {
+        0%, 20% { content: ''; }
+        40% { content: '.'; }
+        60% { content: '..'; }
+        80%, 100% { content: '...'; }
+    }
+
+    /* Floating Action Buttons */
+    .fab {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(45deg, #38BDF8, #9333EA);
         border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 5px;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        color: white;
+        font-size: 24px;
         cursor: pointer;
+        box-shadow: 0 4px 20px rgba(56, 189, 248, 0.3);
+        transition: all 0.3s ease;
     }
-    .action-btn {
+
+    .fab:hover {
+        box-shadow: 0 6px 30px rgba(56, 189, 248, 0.5);
+        transform: scale(1.1);
+    }
+
+    /* Icon Buttons */
+    .icon-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        padding: 0.5rem;
         margin: 0.2rem;
+        color: #E5E7EB;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .icon-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    /* Circular Knob */
+    .circular-knob {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: conic-gradient(#38BDF8 0deg, #38BDF8 var(--value), #1A1F2E var(--value), #1A1F2E 360deg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #E5E7EB;
+        margin: 0 auto;
+    }
+
+    /* Chips */
+    .chip {
+        display: inline-block;
+        background: rgba(56, 189, 248, 0.2);
+        border: 1px solid #38BDF8;
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        margin: 0.2rem;
+        color: #38BDF8;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .chip:hover, .chip.selected {
+        background: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Progress Bar */
+    .custom-progress {
+        width: 100%;
+        height: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    .custom-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #38BDF8, #9333EA);
+        border-radius: 5px;
+        transition: width 0.3s ease;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -188,37 +372,77 @@ if 'stories' not in st.session_state:
 if 'current_story' not in st.session_state:
     st.session_state.current_story = None
 
-# Sidebar
-st.sidebar.markdown('<h2 class="sidebar-header">🎛️ Story Controls</h2>', unsafe_allow_html=True)
+# Layout redesign: two-column layout with collapsible sidebar
 
-col1, col2 = st.sidebar.columns(2)
-with col1:
-    genre = st.selectbox("Genre", GENRES, help="Choose the story genre")
-with col2:
-    tone = st.selectbox("Tone", TONES, help="Select the narrative tone")
+# Sidebar container with collapsible panels
+with st.sidebar.expander("🎛️ Story Controls", expanded=True):
+    # Controls inside sidebar
+    col1, col2 = st.columns(2)
+    with col1:
+        # Icon dropdown for Genre
+        genre_options = {
+            "Fantasy 🧝": "Fantasy",
+            "Sci-Fi 🚀": "Sci-Fi",
+            "Mystery 🕵️": "Mystery",
+            "Romance ❤️": "Romance",
+            "Horror 👻": "Horror",
+            "Adventure 🗺️": "Adventure",
+            "Comedy 😂": "Comedy",
+            "Drama 🎭": "Drama"
+        }
+        genre_display = st.selectbox("Genre", list(genre_options.keys()), help="Choose the story genre")
+        genre = genre_options[genre_display]
+    with col2:
+        # Icon dropdown for Tone
+        tone_options = {
+            "Dark 🌑": "Dark",
+            "Whimsical 🦄": "Whimsical",
+            "Poetic 🎼": "Poetic",
+            "Satirical 🎭": "Satirical"
+        }
+        tone_display = st.selectbox("Tone", list(tone_options.keys()), help="Select the narrative tone")
+        tone = tone_options[tone_display]
 
-num_characters = st.sidebar.slider("Number of Characters", 2, 5, 3, help="How many main characters?")
-twist_style = st.sidebar.selectbox("Twist Style", TWIST_STYLES, help="Type of plot twist")
-story_length = st.sidebar.slider("Story Length (words)", 500, 2000, 1000, help="Approximate word count")
-voice_style = st.sidebar.selectbox("Voice Style", VOICE_STYLES, help="Narration voice style")
+    # Circular knob for number of characters (simulate with slider and CSS)
+    num_characters = st.slider("Number of Characters", 2, 5, 3, help="How many main characters?")
+    # TODO: Add circular knob UI with live preview
 
-surprise_me = st.sidebar.button("🎲 Surprise Me!", help="Randomize all settings")
-if surprise_me:
-    genre = random.choice(GENRES)
-    twist_style = random.choice(TWIST_STYLES)
-    num_characters = random.randint(2, 5)
-    story_length = random.randint(500, 2000)
-    tone = random.choice(TONES)
-    st.sidebar.success(f"✨ Randomized settings applied!")
+    # Chips for twist style
+    selected_twist = st.multiselect("Twist Style", TWIST_STYLES, default=[TWIST_STYLES[0]], help="Type of plot twist")
+    twist_style = selected_twist[0] if selected_twist else TWIST_STYLES[0]
 
-generate = st.sidebar.button("🚀 Generate Story", help="Create a new story")
-if generate:
-    with st.spinner("🧠 AI is crafting your story..."):
+    # Progress bar + numeric input for story length
+    story_length = st.number_input("Story Length (words)", min_value=500, max_value=2000, value=1000, step=100, help="Approximate word count")
+    story_length_progress = st.progress((story_length - 500) / 1500)
+
+    voice_style = st.selectbox("Voice Style", VOICE_STYLES, help="Narration voice style")
+
+    surprise_me = st.button("🎲 Surprise Me!", help="Randomize all settings")
+    if surprise_me:
+        genre = random.choice(GENRES)
+        twist_style = random.choice(TWIST_STYLES)
+        num_characters = random.randint(2, 5)
+        story_length = random.randint(500, 2000)
+        tone = random.choice(TONES)
+        st.success(f"✨ Randomized settings applied!")
+
+    generate = st.button("🚀 Generate Story", help="Create a new story")
+    if generate:
+        # Typing dots animation in spinner
+        spinner_placeholder = st.empty()
         progress_bar = st.progress(0)
+
         for i in range(100):
+            dots = "." * ((i // 10) % 4)
+            spinner_placeholder.markdown(f'<div class="typing-dots">🧠 AI is crafting your story{dots}</div>', unsafe_allow_html=True)
             progress_bar.progress(i + 1)
-        raw_story = generate_story(genre, num_characters, twist_style, story_length, tone)
+            time.sleep(0.05)  # Simulate processing time
+
+        spinner_placeholder.empty()
         progress_bar.empty()
+
+        raw_story = generate_story(genre, num_characters, twist_style, story_length, tone)
+
         if raw_story.startswith("Error"):
             st.error(f"❌ {raw_story}")
         else:
@@ -235,90 +459,138 @@ if generate:
             st.session_state.current_story = current_story
             st.session_state.stories.append(current_story)
             st.success("🎉 Story generated successfully!")
-            st.balloons()
 
-# Display current story
+            # Enhanced confetti animation
+            st.balloons()
+            st.markdown("""
+            <script>
+                // Simple confetti effect
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.style.position = 'fixed';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.top = '-10px';
+                    confetti.style.width = '10px';
+                    confetti.style.height = '10px';
+                    confetti.style.background = ['#38BDF8', '#9333EA', '#FFD700', '#FF6B6B'][Math.floor(Math.random() * 4)];
+                    confetti.style.borderRadius = '50%';
+                    confetti.style.zIndex = '9999';
+                    confetti.style.animation = 'fall 3s linear forwards';
+                    document.body.appendChild(confetti);
+                    setTimeout(() => confetti.remove(), 3000);
+                }
+            </script>
+            <style>
+                @keyframes fall {
+                    to { transform: translateY(100vh) rotate(360deg); }
+                }
+            </style>
+            """, unsafe_allow_html=True)
+
+# Display current story in scrollable card
 if st.session_state.current_story:
     cs = st.session_state.current_story
     st.markdown("---")
-    st.markdown(f"## 📚 Your {cs['genre']} Story with a {cs['twist_style']} Twist")
+    st.markdown(f'<h2 class="neon-blue">📚 Your {cs["genre"]} Story with a {cs["twist_style"]} Twist</h2>', unsafe_allow_html=True)
 
-    # Characters section
-    with st.expander("👥 Characters", expanded=True):
-        st.markdown('<div class="story-section">', unsafe_allow_html=True)
-        if cs['characters']:
-            for char in cs['characters']:
-                st.markdown(f"• {char}")
-        else:
-            st.write("No characters generated.")
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Scrollable story card
+    st.markdown('<div class="story-card">', unsafe_allow_html=True)
 
-    # Setting section
-    with st.expander("🌍 Setting", expanded=True):
-        st.markdown('<div class="story-section">', unsafe_allow_html=True)
-        st.write(cs['setting'] or "No setting generated.")
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Characters section with emoji header
+    st.markdown('<h3 class="neon-purple">👥 Characters</h3>', unsafe_allow_html=True)
+    if cs['characters']:
+        for char in cs['characters']:
+            st.markdown(f"• **{char}**")
+    else:
+        st.write("No characters generated.")
 
-    # Story section
-    with st.expander("📖 The Story", expanded=True):
-        st.markdown('<div class="story-section">', unsafe_allow_html=True)
-        st.write(cs['story'] or "No story generated.")
-        st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("---")
 
-    # Twist section
-    with st.expander("🤯 The Twist", expanded=True):
-        st.markdown('<div class="story-section">', unsafe_allow_html=True)
-        st.write(cs['twist'] or "No twist explanation generated.")
-        st.markdown('</div>', unsafe_allow_html=True)
+    # Setting section with emoji header
+    st.markdown('<h3 class="neon-purple">🌍 Setting</h3>', unsafe_allow_html=True)
+    st.write(cs['setting'] or "No setting generated.")
 
-    # Action buttons
-    st.markdown("### 🎬 Actions")
+    st.markdown("---")
+
+    # Story section with emoji header and typewriter effect simulation
+    st.markdown('<h3 class="neon-purple">✨ The Story</h3>', unsafe_allow_html=True)
+    if cs['story']:
+        # Simulate typewriter effect by displaying text progressively
+        story_placeholder = st.empty()
+        story_text = cs['story']
+        displayed_text = ""
+        for char in story_text:
+            displayed_text += char
+            story_placeholder.markdown(f'<span class="typewriter">{displayed_text}</span>', unsafe_allow_html=True)
+            time.sleep(0.01)  # Adjust speed as needed
+        story_placeholder.markdown(story_text)  # Final display without animation
+    else:
+        st.write("No story generated.")
+
+    st.markdown("---")
+
+    # Twist section with emoji header
+    st.markdown('<h3 class="neon-purple">😱 The Twist</h3>', unsafe_allow_html=True)
+    st.write(cs['twist'] or "No twist explanation generated.")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Action buttons with modern styling (remove duplicate buttons)
+    st.markdown('<h3 class="neon-blue">🎬 Actions</h3>', unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("🔊 Narrate Story", help="Listen to the story"):
+        # Play button with waveform animation
+        if st.button("▶️ Narrate Story", key="narrate", help="Listen to the story"):
             with st.spinner("Narrating..."):
                 narrate_story(cs['story'], voice_style)
             st.success("🎤 Narration completed!")
     with col2:
-        if st.button("📄 Export PDF", help="Download as PDF"):
+        # Icon button for PDF export
+        if st.button("📄 Export PDF", key="pdf", help="Download as PDF"):
             export_pdf(cs['characters'], cs['setting'], cs['story'], cs['twist'], "story.pdf")
             st.success("📥 PDF exported!")
             with open("story.pdf", "rb") as f:
                 st.download_button("Download PDF", f, "story.pdf")
     with col3:
-        if st.button("🎵 Export Audio", help="Download as MP3"):
+        # Icon button for audio export
+        if st.button("🎵 Export Audio", key="audio", help="Download as MP3"):
             export_audio(cs['story'], voice_style, "story.mp3")
             st.success("📥 Audio exported!")
             with open("story.mp3", "rb") as f:
                 st.download_button("Download MP3", f, "story.mp3")
 
-    # Continuation buttons
-    st.markdown("### ➕ Extend Your Story")
-    col4, col5 = st.columns(2)
-    with col4:
-        if st.button("📝 Continue Story", help="Add a new chapter"):
-            with st.spinner("Continuing story..."):
-                continue_prompt = f"Continue the following story with a new chapter of similar length:\n\n{cs['raw']}\n\nNew chapter:"
-                client = OllamaClient(model=MODEL)
-                new_chapter = client.generate(continue_prompt)
-                if new_chapter.startswith("Error"):
-                    st.error(new_chapter)
-                else:
-                    cs['story'] += "\n\n**New Chapter**\n\n" + new_chapter
-                    st.success("✨ Story continued!")
-                    st.experimental_rerun()
-    with col5:
-        if st.button("🔄 Add Another Twist", help="Introduce a new twist"):
-            with st.spinner("Adding twist..."):
-                twist_prompt = f"Add another twist to the following story:\n\n{cs['raw']}\n\nAdditional twist:"
-                client = OllamaClient(model=MODEL)
-                new_twist = client.generate(twist_prompt)
-                if new_twist.startswith("Error"):
-                    st.error(new_twist)
-                else:
-                    cs['story'] += "\n\n**Additional Twist**\n\n" + new_twist
-                    st.success("🎭 Twist added!")
-                    st.experimental_rerun()
+    # Floating Action Buttons (FAB) for Extend Story
+    st.markdown("""
+    <div style="position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px;">
+        <button class="fab" title="Continue Story">📝</button>
+        <button class="fab" title="Add Another Twist">🔄</button>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Handle FAB clicks (hidden buttons for functionality)
+    if st.button("Continue Story", key="continue_fab"):
+        with st.spinner("Continuing story..."):
+            continue_prompt = f"Continue the following story with a new chapter of similar length:\n\n{cs['raw']}\n\nNew chapter:"
+            client = OllamaClient(model=MODEL)
+            new_chapter = client.generate(continue_prompt)
+            if new_chapter.startswith("Error"):
+                st.error(new_chapter)
+            else:
+                cs['story'] += "\n\n**New Chapter**\n\n" + new_chapter
+                st.success("✨ Story continued!")
+                st.experimental_rerun()
+
+    if st.button("Add Another Twist", key="twist_fab"):
+        with st.spinner("Adding twist..."):
+            twist_prompt = f"Add another twist to the following story:\n\n{cs['raw']}\n\nAdditional twist:"
+            client = OllamaClient(model=MODEL)
+            new_twist = client.generate(twist_prompt)
+            if new_twist.startswith("Error"):
+                st.error(new_twist)
+            else:
+                cs['story'] += "\n\n**Additional Twist**\n\n" + new_twist
+                st.success("🎭 Twist added!")
+                st.experimental_rerun()
 
 # Gallery
 st.sidebar.header("Story Gallery")
