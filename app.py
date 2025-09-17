@@ -537,7 +537,7 @@ if st.session_state.current_story:
 
     # Action buttons with modern styling (remove duplicate buttons)
     st.markdown('<h3 class="neon-blue">🎬 Actions</h3>', unsafe_allow_html=True)
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         # Play button with waveform animation
         if st.button("▶️ Narrate Story", key="narrate", help="Listen to the story"):
@@ -558,39 +558,26 @@ if st.session_state.current_story:
             st.success("📥 Audio exported!")
             with open("story.mp3", "rb") as f:
                 st.download_button("Download MP3", f, "story.mp3")
+    with col4:
+        # Continue Story button
+        if st.button("📝 Continue Story", key="continue_story", help="Continue the story with a new chapter"):
+            with st.spinner("Continuing story..."):
+                continue_prompt = f"Continue the following story with a new chapter of similar length, keeping the same characters, but updating the setting and twist if necessary. Output in the exact same format as the original story.\n\nOriginal story:\n\n{cs['raw']}\n\nContinued story:"
+                client = OllamaClient(model=MODEL)
+                new_full = client.generate(continue_prompt)
+                if new_full.startswith("Error"):
+                    st.error(new_full)
+                else:
+                    new_characters, new_setting, new_story, new_twist = parse_story(new_full)
+                    cs['characters'] = new_characters
+                    cs['setting'] = new_setting
+                    cs['story'] = new_story
+                    cs['twist'] = new_twist
+                    cs['raw'] = new_full
+                    st.success("✨ Story continued!")
+                    st.experimental_rerun()
 
-    # Floating Action Buttons (FAB) for Extend Story
-    st.markdown("""
-    <div style="position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px;">
-        <button class="fab" title="Continue Story">📝</button>
-        <button class="fab" title="Add Another Twist">🔄</button>
-    </div>
-    """, unsafe_allow_html=True)
 
-    # Handle FAB clicks (hidden buttons for functionality)
-    if st.button("Continue Story", key="continue_fab"):
-        with st.spinner("Continuing story..."):
-            continue_prompt = f"Continue the following story with a new chapter of similar length:\n\n{cs['raw']}\n\nNew chapter:"
-            client = OllamaClient(model=MODEL)
-            new_chapter = client.generate(continue_prompt)
-            if new_chapter.startswith("Error"):
-                st.error(new_chapter)
-            else:
-                cs['story'] += "\n\n**New Chapter**\n\n" + new_chapter
-                st.success("✨ Story continued!")
-                st.experimental_rerun()
-
-    if st.button("Add Another Twist", key="twist_fab"):
-        with st.spinner("Adding twist..."):
-            twist_prompt = f"Add another twist to the following story:\n\n{cs['raw']}\n\nAdditional twist:"
-            client = OllamaClient(model=MODEL)
-            new_twist = client.generate(twist_prompt)
-            if new_twist.startswith("Error"):
-                st.error(new_twist)
-            else:
-                cs['story'] += "\n\n**Additional Twist**\n\n" + new_twist
-                st.success("🎭 Twist added!")
-                st.experimental_rerun()
 
 # Gallery
 st.sidebar.header("Story Gallery")
