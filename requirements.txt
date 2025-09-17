@@ -2,3 +2,9 @@ streamlit
 requests
 pyttsx3
 fpdf
+langchain
+langchain-community
+langchain-huggingface
+faiss-cpu
+pypdf
+sentence-transformers

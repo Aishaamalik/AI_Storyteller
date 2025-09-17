@@ -22,6 +22,7 @@ Your task is to generate a story experience based on the following inputs:
 - Twist Style: {twist_style}
 - Story Length: about {story_length} words
 - Tone: {tone}
+{retrieved_context}
 Instructions:
 - Characters: Create {num_characters} characters with distinct names, traits, backstories, and personal conflicts. Each character should have a secret or hidden agenda that can fuel the twist.
 - World-building: Describe the setting with vivid sensory details. Add cultural, historical, or fantastical elements appropriate to {genre}.
@@ -41,8 +42,15 @@ Twist explanation
 """
 
 # Function to generate story
-def generate_story(genre, num_characters, twist_style, story_length, tone):
-    prompt = PROMPT_TEMPLATE.format(genre=genre, num_characters=num_characters, twist_style=twist_style, story_length=story_length, tone=tone)
+def generate_story(genre, num_characters, twist_style, story_length, tone, retrieved_context=""):
+    prompt = PROMPT_TEMPLATE.format(
+        genre=genre,
+        num_characters=num_characters,
+        twist_style=twist_style,
+        story_length=story_length,
+        tone=tone,
+        retrieved_context=retrieved_context
+    )
     client = OllamaClient(model=MODEL)
     return client.generate(prompt)
 
@@ -371,6 +379,11 @@ if 'stories' not in st.session_state:
     st.session_state.stories = []
 if 'current_story' not in st.session_state:
     st.session_state.current_story = None
+if 'use_rag' not in st.session_state:
+    st.session_state.use_rag = False
+
+from rag_retriever import RAGRetriever
+retriever = RAGRetriever()
 
 # Layout redesign: two-column layout with collapsible sidebar
 
@@ -417,6 +430,9 @@ with st.sidebar.expander("🎛️ Story Controls", expanded=True):
 
     voice_style = st.selectbox("Voice Style", VOICE_STYLES, help="Narration voice style")
 
+    use_rag = st.checkbox("Enable RAG (Retrieval-Augmented Generation)", value=st.session_state.use_rag)
+    st.session_state.use_rag = use_rag
+
     surprise_me = st.button("🎲 Surprise Me!", help="Randomize all settings")
     if surprise_me:
         genre = random.choice(GENRES)
@@ -441,7 +457,16 @@ with st.sidebar.expander("🎛️ Story Controls", expanded=True):
         spinner_placeholder.empty()
         progress_bar.empty()
 
-        raw_story = generate_story(genre, num_characters, twist_style, story_length, tone)
+        retrieved_context = ""
+        if st.session_state.use_rag:
+            query = f"Genre: {genre}, Twist Style: {twist_style}, Tone: {tone}"
+            retrieved_docs = retriever.retrieve(query)
+            if retrieved_docs:
+                retrieved_context = "\nContext from documents:\n" + "\n".join(retrieved_docs)
+            else:
+                retrieved_context = "\nNo relevant context found in documents."
+
+        raw_story = generate_story(genre, num_characters, twist_style, story_length, tone, retrieved_context)
 
         if raw_story.startswith("Error"):
             st.error(f"❌ {raw_story}")
